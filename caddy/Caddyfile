@@ -1,0 +1,5 @@
+{$DOMAIN} {
+  encode gzip
+  tls {$LETSENCRYPT_EMAIL}
+  reverse_proxy grafana:3000
+}
