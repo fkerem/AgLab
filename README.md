@@ -1,6 +1,6 @@
 # Agriculture Grafana Lab Environment
 
-This repository makes the university agriculture data-visualization lab reproducible for future instructors. It runs a Course VM first stack with TimescaleDB, Grafana, optional Caddy HTTPS, synthetic agriculture sample data, and scripts for per-student accounts.
+This repository makes the university agriculture data-visualization lab reproducible for future instructors. It runs a Course VM first stack with TimescaleDB, Grafana, optional Caddy HTTPS, course lecture/lab/homework materials, agriculture sensor datasets, and scripts for per-student accounts.
 
 The repo intentionally does not contain live credentials. Copy `.env.example` to `.env` and fill in local values on each deployment.
 
@@ -32,10 +32,15 @@ Optional public HTTPS:
 - `db/init/`: Database initialization SQL for TimescaleDB and demo data.
 - `grafana/provisioning/`: Instructor datasource and dashboard provisioning.
 - `grafana/dashboards/`: Provisioned instructor demo dashboard.
-- `data/sample/`: Small synthetic CSV files for lab practice.
+- `materials/lecture/`: Lecture PDF.
+- `materials/in-lab/`: Guided in-lab assignment PDF.
+- `materials/homework/`: Homework assignment PDF.
+- `data/in-lab/`: Soil temperature CSV and pre-generated bulk SQL.
+- `data/homework/`: Weather station homework CSV.
 - `data/private/`: Optional local-only real datasets. This path is gitignored.
 - `scripts/healthcheck.sh`: Service and database health checks.
 - `scripts/provision_students.sh`: Creates student PostgreSQL and Grafana accounts.
+- `scripts/csv_to_sql.py`: Typed CSV-to-SQL helper provided with the course materials.
 - `scripts/csv_to_insert.py`: Converts CSV rows into inspectable PostgreSQL INSERT SQL.
 
 ## Quick Start
@@ -185,9 +190,23 @@ By default, students create their own Grafana PostgreSQL datasource during the l
 PREPROVISION_STUDENT_DATASOURCES=true
 ```
 
-## Sample CSV Workflow
+## Course Materials and Datasets
 
-The sample CSV files are intentionally small so instructors can validate the lab flow before using real course data.
+Included instructional materials:
+
+- `materials/lecture/Lecture.pdf`
+- `materials/in-lab/in-lab.pdf`
+- `materials/homework/homework.pdf`
+
+Included datasets:
+
+- `data/in-lab/soil_temperature.csv`: soil temperature lab dataset, timestamp range July 1 to August 1, 2025.
+- `data/in-lab/soil_temperature_bulk.sql`: pre-generated bulk insert SQL for the soil temperature lab dataset.
+- `data/homework/weather_station_7_days.csv`: weather station homework dataset, timestamp range February 12 to February 19, 2026.
+
+Students must set Grafana's dashboard time picker to a range that overlaps the dataset they are using.
+
+## Lab CSV Workflow
 
 Soil temperature table example:
 
@@ -196,7 +215,7 @@ CREATE TABLE soil_temperature (
   ts TIMESTAMPTZ NOT NULL,
   device_id TEXT NOT NULL,
   depth_cm INTEGER NOT NULL,
-  temperature_c NUMERIC(6,2),
+  temp_c NUMERIC(6,2),
   PRIMARY KEY (ts, device_id, depth_cm)
 );
 
@@ -206,18 +225,28 @@ SELECT create_hypertable('soil_temperature', 'ts', if_not_exists => TRUE);
 Generate INSERT SQL:
 
 ```bash
-scripts/csv_to_insert.py data/sample/soil_temperature_sample.csv \
+scripts/csv_to_sql.py data/in-lab/soil_temperature.csv \
   --table soil_temperature \
-  --output /tmp/soil_temperature_insert.sql
+  --cols ts,device_id,depth_cm,temp_c \
+  --text-cols ts,device_id \
+  --int-cols depth_cm \
+  --numeric-cols temp_c \
+  > /tmp/soil_temperature_bulk.sql
 ```
 
 Load it as a student:
 
 ```bash
-psql -h <BIND_IP> -U student1 -d aglab -f /tmp/soil_temperature_insert.sql
+psql -h <BIND_IP> -U student1 -d aglab -f /tmp/soil_temperature_bulk.sql
 ```
 
-For real datasets, place local copies under `data/private/` or another secure location and do not commit them unless the dataset is approved for redistribution.
+Or load the pre-generated SQL file:
+
+```bash
+psql -h <BIND_IP> -U student1 -d aglab -f data/in-lab/soil_temperature_bulk.sql
+```
+
+For additional local-only datasets, place copies under `data/private/` or another secure location and do not commit them unless the dataset is approved for redistribution.
 
 ## Common Operations
 
