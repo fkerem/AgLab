@@ -4,6 +4,10 @@ This repository makes the university agriculture data-visualization lab reproduc
 
 The repo intentionally does not contain live credentials. Copy `.env.example` to `.env` and fill in local values on each deployment.
 
+## Recognition
+
+- **Accepted abstract at ASABE AIM 2026.** *Agriculture-Focused Introduction to Data Visualization with Grafana: A University-Level Tutorial Module* was accepted for oral presentation at the ASABE Annual International Meeting in Indianapolis, July 12–15, 2026 (presentation ID **2601555**). See the [official technical schedule, page 3](https://asabe.org/portals/0/events/2026%20aim/26aim%20technical%20session%20schedule.pdf?ver=JUrog6DzwjeEh0RlUnTzQA%3D%3D#page=3).
+
 ## System Requirements
 
 Recommended Course VM:
